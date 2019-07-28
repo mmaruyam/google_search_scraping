@@ -1,0 +1,44 @@
+import urllib3
+import urllib
+import re
+from bs4 import BeautifulSoup
+import certifi
+
+#url = "https://www.nikkei.com/"
+searchUrlFormat = 'https://www.google.co.jp/search?q=%s'
+query = '京アニ'
+url = searchUrlFormat % urllib.parse.quote(query)
+pattern = '^/url\?q='
+
+def HtmlParse():
+  # httpsの証明書検証を実行している
+  http = urllib3.PoolManager(
+    cert_reqs='CERT_REQUIRED',
+    ca_certs=certifi.where())
+  r = http.request('GET', url)
+  soup = BeautifulSoup(r.data, 'html.parser')
+  #title_tag = soup.title
+  #title = title_tag.string
+  #print(title_tag)
+  div = soup.find_all('a')
+
+  idx = 1
+  for elm in div:
+    #print(elm.parent)
+    href = elm['href']
+    if re.match(pattern, href) == None:
+      continue
+    #print(elm)
+    contents = elm.text
+    link = href.split('=', 1)
+    parts = link[1].split('/')
+    chk_url = parts[2]
+    if chk_url in contents:
+      print('---------------')
+      print(str(idx) + ':' + contents)
+      idx += 1
+    if idx == 4:
+      break
+
+if __name__ == '__main__':
+  HtmlParse()
